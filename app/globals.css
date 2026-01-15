@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc; /* Slate-50 */
+  --foreground: #0f172a; /* Slate-900 */
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* ... kode tailwind yang sudah ada biarkan saja ... */
+
+/* === TAMBAHAN UNTUK ANIMASI === */
+
+/* 1. Animasi Running Text (Marquee) */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+  padding-left: 100%; /* Mulai dari luar layar kanan */
+}
+
+/* 2. Animasi Ikon Melayang (Bounce Slow) */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  /* GANTI DARI 20s JADI 45s AGAR LEBIH LAMBAT & MUDAH DIBACA */
+  animation: marquee 55s linear infinite; 
+  padding-left: 100%;
+}
+
+/* 3. Sembunyikan Scrollbar (untuk menu navbar yang panjang) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
