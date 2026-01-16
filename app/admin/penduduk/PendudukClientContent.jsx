@@ -1,0 +1,200 @@
+"use client";
+import { useState } from 'react';
+import { savePenduduk, deletePenduduk } from '../../../actions/penduduk';
+import { useRouter } from 'next/navigation';
+
+export default function PendudukClientContent({ initialData, totalCount, currentPage }) {
+  const router = useRouter();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState({ nama: '', nik: '', jk: 'Laki-laki', pekerjaan: 'Petani', alamat: 'Dusun Krajan' });
+
+  // Fungsi Helper
+  const resetForm = () => {
+    setFormData({ nama: '', nik: '', jk: 'Laki-laki', pekerjaan: 'Petani', alamat: 'Dusun Krajan' });
+    setIsEditMode(false);
+    setIsFormOpen(false);
+  };
+
+  const startEdit = (warga) => {
+    setFormData(warga);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      await savePenduduk(formData, isEditMode);
+      alert("Data berhasil disimpan!");
+      resetForm();
+    } catch (err) {
+      alert("Gagal simpan: " + err.message);
+    }
+  };
+
+  const handleDelete = async (nik) => {
+    if (confirm('Yakin ingin menghapus warga ini?')) {
+      try {
+        await deletePenduduk(nik);
+        alert("Data berhasil dihapus!");
+      } catch (err) {
+        alert("Gagal hapus: " + err.message);
+      }
+    }
+  };
+
+  // Filter pencarian lokal (untuk data yang ada di halaman ini)
+  const filteredData = initialData.filter(item => 
+    item.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    item.nik?.toString().includes(searchTerm)
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 md:ml-64 p-6 font-sans flex flex-col gap-6">
+      
+      {/* HEADER */}
+      <div className="bg-white p-5 rounded-xl border shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Manajemen Penduduk</h1>
+          <p className="text-slate-500 text-xs mt-1 font-medium italic">Data aman di Backend (Halaman {currentPage})</p>
+        </div>
+        <button 
+          onClick={() => { if(isFormOpen) resetForm(); else setIsFormOpen(true); }}
+          className={`${isFormOpen ? 'bg-slate-500' : 'bg-emerald-600'} text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg transition hover:opacity-90`}
+        >
+          {isFormOpen ? '✕ Batal' : '+ Tambah Warga'}
+        </button>
+      </div>
+
+      {/* FORM (Hanya muncul jika isFormOpen true) */}
+      {isFormOpen && (
+        <div className="bg-white p-6 rounded-xl border-2 border-emerald-100 shadow-xl">
+          <h2 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-widest border-b pb-2">
+            {isEditMode ? '🛠️ Edit Data Warga' : '📝 Input Warga Baru'}
+          </h2>
+          <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Nama Lengkap</label>
+              <input type="text" required className="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-sm"
+                value={formData.nama} onChange={(e) => setFormData({...formData, nama: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">NIK</label>
+              <input type="text" required disabled={isEditMode} 
+                className={`w-full p-3 border rounded-lg outline-none font-bold text-sm ${isEditMode ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:ring-2 focus:ring-emerald-500'}`}
+                value={formData.nik} onChange={(e) => setFormData({...formData, nik: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Jenis Kelamin</label>
+              <select className="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-sm"
+                value={formData.jk} onChange={(e) => setFormData({...formData, jk: e.target.value})}>
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Pekerjaan</label>
+              <select className="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-sm"
+                value={formData.pekerjaan} onChange={(e) => setFormData({...formData, pekerjaan: e.target.value})}>
+                <option value="Petani">Petani</option>
+                <option value="Wiraswasta">Wiraswasta</option>
+                <option value="PNS">PNS / ASN</option>
+                <option value="Guru">Guru / Dosen</option>
+                <option value="Pelajar">Pelajar / Mahasiswa</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Alamat (Dusun/RT/RW)</label>
+              <input type="text" required className="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-sm"
+                value={formData.alamat} onChange={(e) => setFormData({...formData, alamat: e.target.value})} />
+            </div>
+            <div className="md:col-span-3">
+              <button type="submit" className="w-full bg-slate-900 text-white font-bold py-4 rounded-lg hover:bg-emerald-600 transition shadow-lg uppercase tracking-widest text-xs">
+                {isEditMode ? '💾 Simpan Perubahan' : '🚀 Daftarkan ke Database'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* SEARCH BAR */}
+      <div className="relative w-full max-w-2xl">
+          <input 
+            type="text" 
+            placeholder="Cari di halaman ini..." 
+            className="w-full pl-12 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-500 shadow-sm text-sm font-medium transition-all"
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+      </div>
+
+      {/* TABEL DATA */}
+      <div className="w-full bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
+            <thead className="bg-slate-50/50 border-b text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+              <tr>
+                <th className="py-4 px-5">Nama Lengkap</th>
+                <th className="py-4 px-5">NIK</th>
+                <th className="py-4 px-5 text-center">L/P</th>
+                <th className="py-4 px-5 text-center">Pekerjaan</th>
+                <th className="py-4 px-5">Alamat</th>
+                <th className="py-4 px-5 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm divide-y">
+              {filteredData.map((item) => (
+                <tr key={item.nik} className="hover:bg-slate-50 transition">
+                  <td className="py-4 px-5 font-bold text-slate-900">{item.nama}</td>
+                  <td className="py-4 px-5 text-slate-500 font-mono text-xs">{item.nik}</td>
+                  <td className="py-4 px-5 text-center">
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold border ${item.jk === 'Laki-laki' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-pink-50 text-pink-600 border-pink-100'}`}>
+                      {item.jk}
+                    </span>
+                  </td>
+                  <td className="py-4 px-5 text-center font-bold text-emerald-700 text-[10px]">
+                    <span className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">{item.pekerjaan}</span>
+                  </td>
+                  <td className="py-4 px-5 text-slate-600 text-xs">{item.alamat}</td>
+                  <td className="py-4 px-5 text-center flex justify-center gap-1 mt-2">
+                    <button onClick={() => startEdit(item)} className="p-2 text-slate-400 hover:text-emerald-500 transition">
+                      🛠️
+                    </button>
+                    <button onClick={() => handleDelete(item.nik)} className="p-2 text-slate-400 hover:text-red-500 transition">
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex justify-center items-center gap-6 py-4">
+        <button 
+          disabled={currentPage <= 1}
+          onClick={() => router.push(`?page=${currentPage - 1}`)}
+          className="px-6 py-2 bg-white border-2 rounded-xl font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition"
+        >
+          ⬅️ Sebelumnya
+        </button>
+        <span className="text-sm font-bold text-slate-800 bg-emerald-100 px-4 py-2 rounded-lg border border-emerald-200">
+          Halaman {currentPage}
+        </span>
+        <button 
+          disabled={initialData.length < 10}
+          onClick={() => router.push(`?page=${currentPage + 1}`)}
+          className="px-6 py-2 bg-white border-2 rounded-xl font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-30 transition"
+        >
+          Selanjutnya ➡️
+        </button>
+      </div>
+    </div>
+  );
+}

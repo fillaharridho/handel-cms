@@ -1,0 +1,134 @@
+"use client";
+import Link from 'next/link';
+
+export default function DashboardClient({ initialCounts, initialComplaints }) {
+  
+  const stats = [
+    { 
+        label: "Total Penduduk", 
+        value: initialCounts.penduduk.toLocaleString('id-ID'), 
+        desc: "Data Warga", 
+        icon: "👥", 
+        theme: "blue", 
+        link: "/admin/penduduk" 
+    },
+    { 
+        label: "Aduan Masuk", 
+        value: initialCounts.pengaduan, 
+        desc: "Perlu Tindakan", 
+        icon: "📢", 
+        theme: "red", 
+        link: "/admin/pengaduan" 
+    },
+    { 
+        label: "Berita & Info", 
+        value: initialCounts.berita, 
+        desc: "Telah Terbit", 
+        icon: "📰", 
+        theme: "emerald", 
+        link: "/admin/berita" 
+    }
+  ];
+
+  const getThemeClasses = (theme) => {
+      const themes = {
+          blue: "bg-blue-50 text-blue-600 border-blue-100",
+          red: "bg-red-50 text-red-600 border-red-100",
+          emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      };
+      return themes[theme] || themes.blue;
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 md:ml-64 p-8 transition-all font-sans flex flex-col gap-8">
+      
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-slate-500 text-sm mt-1">Status sistem desa secara real-time.</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-bold text-slate-600">Sistem Terhubung</span>
+        </div>
+      </div>
+
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {stats.map((item, idx) => (
+          <Link href={item.link} key={idx} className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-all hover:-translate-y-1">
+             <div className="flex justify-between items-start mb-4">
+                 <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">{item.label}</p>
+                    <h3 className="text-3xl font-extrabold text-slate-800">{item.value}</h3>
+                 </div>
+                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl border ${getThemeClasses(item.theme)}`}>
+                    {item.icon}
+                 </div>
+             </div>
+             <div className="flex items-center justify-between border-t border-slate-50 pt-4">
+                 <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded">{item.desc}</span>
+                 <span className="text-xs font-bold text-emerald-500">Lihat Detail →</span>
+             </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* ADUAN TERBARU */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                  <h3 className="font-bold text-slate-800">🔔 Aduan Warga Terbaru</h3>
+                  <Link href="/admin/pengaduan" className="text-xs font-bold text-emerald-600">Lihat Semua →</Link>
+              </div>
+              <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                      <thead className="bg-slate-50/50">
+                          <tr className="text-[10px] font-bold text-slate-400 uppercase">
+                              <th className="py-4 px-6">Pelapor</th>
+                              <th className="py-4 px-6">Kategori</th>
+                              <th className="py-4 px-6 text-center">Status</th>
+                          </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                          {initialComplaints.length === 0 ? (
+                              <tr><td colSpan="3" className="p-10 text-center text-slate-400 italic">Belum ada aduan.</td></tr>
+                          ) : initialComplaints.map((item) => (
+                              <tr key={item.id} className="hover:bg-slate-50 transition">
+                                  <td className="py-4 px-6 font-bold text-slate-700 text-sm">{item.nama_pelapor}</td>
+                                  <td className="py-4 px-6 text-xs text-slate-500">{item.kategori}</td>
+                                  <td className="py-4 px-6 text-center">
+                                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${item.status === 'Menunggu' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                          {item.status}
+                                      </span>
+                                  </td>
+                              </tr>
+                          ))}
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+
+          {/* AKSES CEPAT */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
+              <h3 className="font-bold text-slate-800 mb-2">⚡ Akses Cepat</h3>
+              <Link href="/admin/penduduk" className="flex items-center gap-4 p-4 border border-slate-100 rounded-xl hover:border-emerald-400 transition group">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition">👥</div>
+                  <div>
+                      <p className="text-sm font-bold text-slate-700">Tambah Penduduk</p>
+                      <p className="text-[10px] text-slate-400">Input data warga baru</p>
+                  </div>
+              </Link>
+              <Link href="/admin/berita" className="flex items-center gap-4 p-4 border border-slate-100 rounded-xl hover:border-emerald-400 transition group">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition">📰</div>
+                  <div>
+                      <p className="text-sm font-bold text-slate-700">Tulis Berita</p>
+                      <p className="text-[10px] text-slate-400">Publikasi kegiatan desa</p>
+                  </div>
+              </Link>
+          </div>
+      </div>
+    </div>
+  );
+}

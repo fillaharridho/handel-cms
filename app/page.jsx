@@ -1,57 +1,9 @@
-"use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase"; 
+import { getHomeData } from "../services/publicService";
 
-export default function Home() {
-  const [stats, setStats] = useState({ male: 0, female: 0, total: 0 });
-  const [kades, setKades] = useState({ name: "", position: "Kepala Desa", img: null, sambutan: "" });
-  const [perangkat, setPerangkat] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMainData();
-  }, []);
-
-  const fetchMainData = async () => {
-    try {
-      setLoading(true);
-
-      // Ambil data statistik, profil desa, dan perangkat secara paralel
-      const [resPenduduk, resProfil, resPerangkat] = await Promise.all([
-        supabase.from('penduduk').select('jk'),
-        supabase.from('profil_desa').select('*').maybeSingle(),
-        supabase.from('perangkat_desa').select('*').order('created_at', { ascending: true })
-      ]);
-
-      // 1. Proses Statistik Penduduk
-      if (resPenduduk.data) {
-        const male = resPenduduk.data.filter(item => item.jk?.toString().toLowerCase().trim() === 'laki-laki').length;
-        const female = resPenduduk.data.filter(item => item.jk?.toString().toLowerCase().trim() === 'perempuan').length;
-        setStats({ male, female, total: resPenduduk.data.length });
-      }
-
-      // 2. Proses Data Kepala Desa
-      if (resProfil.data) {
-        setKades({
-          name: resProfil.data.nama_kades || "H. Ahmad Dahlan",
-          position: "Kepala Desa",
-          img: resProfil.data.foto_kades || "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1974&auto=format&fit=crop",
-          sambutan: resProfil.data.sambutan_kades || "Selamat datang di website resmi Desa Harmoni."
-        });
-      }
-
-      // 3. Proses Data Perangkat Desa
-      if (resPerangkat.data) {
-        setPerangkat(resPerangkat.data);
-      }
-
-    } catch (err) {
-      console.error("Kesalahan Sistem Utama:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default async function Home() {
+  // Ambil data langsung dari service (Server Side)
+  const { stats, profil, perangkat } = await getHomeData();
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -70,7 +22,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 font-serif leading-tight drop-shadow-lg">
-               Desa <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Harmoni</span>
+                Desa <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Harmoni</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-200 font-light mb-10 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
                Mewujudkan Masyarakat yang Maju, Mandiri, dan Sejahtera Berlandaskan Gotong Royong.
@@ -86,44 +38,41 @@ export default function Home() {
          </div>
       </section>
 
-
       {/* === SECTION 2: STATISTIK DESA === */}
       <section className="py-20 px-4 bg-white relative">
          <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
                <h2 className="text-3xl font-extrabold text-slate-900 uppercase tracking-tight">Statistik Kependudukan</h2>
                <div className="w-24 h-1.5 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
-               <p className="text-slate-500 mt-3 text-sm font-medium">Data terbaru update realtime.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-center hover:shadow-lg transition hover:-translate-y-1">
                   <div className="w-14 h-14 mx-auto bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mb-4">👨</div>
-                  <h3 className="text-3xl font-bold text-slate-800">{loading ? "..." : stats.male.toLocaleString('id-ID')}</h3>
+                  <h3 className="text-3xl font-bold text-slate-800">{stats.male.toLocaleString('id-ID')}</h3>
                   <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">Laki-laki</p>
                </div>
 
                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-center hover:shadow-lg transition hover:-translate-y-1">
                   <div className="w-14 h-14 mx-auto bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-2xl mb-4">👩</div>
-                  <h3 className="text-3xl font-bold text-slate-800">{loading ? "..." : stats.female.toLocaleString('id-ID')}</h3>
+                  <h3 className="text-3xl font-bold text-slate-800">{stats.female.toLocaleString('id-ID')}</h3>
                   <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">Perempuan</p>
                </div>
 
                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-center hover:shadow-lg transition hover:-translate-y-1">
                   <div className="w-14 h-14 mx-auto bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-2xl mb-4">👥</div>
-                  <h3 className="text-3xl font-bold text-slate-800">{loading ? "..." : stats.total.toLocaleString('id-ID')}</h3>
+                  <h3 className="text-3xl font-bold text-slate-800">{stats.total.toLocaleString('id-ID')}</h3>
                   <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">Total Warga</p>
                </div>
             </div>
          </div>
       </section>
 
-      {/* === SECTION 3: PEMERINTAH DESA (DATA DINAMIS) === */}
+      {/* === SECTION 3: PEMERINTAH DESA === */}
       <section className="py-24 bg-emerald-900 relative overflow-hidden">
          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
          
          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-24">
                 
                 {/* 1. Kartu Kepala Desa */}
@@ -132,11 +81,11 @@ export default function Home() {
                       <div className="bg-emerald-800 rounded-2xl p-8 border border-emerald-600 shadow-2xl flex flex-col items-center text-center transform hover:-translate-y-2 transition duration-300">
                           <div className="w-56 h-64 rounded-2xl p-1.5 bg-gradient-to-tr from-yellow-400 to-emerald-400 mb-6 shadow-lg">
                               <div className="w-full h-full rounded-xl overflow-hidden border-4 border-emerald-900 bg-slate-200">
-                                  <img src={kades.img} alt={kades.name} className="w-full h-full object-cover object-top hover:scale-105 transition duration-500"/>
+                                  <img src={profil.foto_kades} alt={profil.nama_kades} className="w-full h-full object-cover object-top hover:scale-105 transition duration-500"/>
                               </div>
                           </div>
-                          <h3 className="text-2xl font-bold text-white mb-2">{kades.name}</h3>
-                          <p className="text-emerald-300 text-sm font-bold uppercase tracking-[0.2em] pb-2">{kades.position}</p>
+                          <h3 className="text-2xl font-bold text-white mb-2">{profil.nama_kades}</h3>
+                          <p className="text-emerald-300 text-sm font-bold uppercase tracking-[0.2em] pb-2">Kepala Desa</p>
                       </div>
                   </div>
                 </div>
@@ -150,16 +99,16 @@ export default function Home() {
                         Kepala Desa <br/> <span className="text-emerald-400">Harmoni</span>
                     </h2>
                     <p className="text-emerald-100 text-lg leading-relaxed italic border-l-4 border-emerald-500 pl-6">
-                        "{kades.sambutan}"
+                        "{profil.sambutan_kades}"
                     </p>
                     <div className="mt-8">
-                       <h4 className="font-bold text-xl text-white">{kades.name}</h4>
+                       <h4 className="font-bold text-xl text-white">{profil.nama_kades}</h4>
                        <p className="text-emerald-400 text-sm uppercase tracking-widest font-bold">Kepala Desa</p>
                     </div>
                 </div>
             </div>
 
-            {/* === STAF DESA (DARI DATABASE) === */}
+            {/* === STAF DESA === */}
             <div className="border-t border-emerald-800 pt-16">
                 <div className="text-center mb-12">
                     <h3 className="text-2xl font-bold text-white uppercase tracking-widest">Perangkat & Staf Desa</h3>
